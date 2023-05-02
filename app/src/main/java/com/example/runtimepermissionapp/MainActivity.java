@@ -13,6 +13,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,6 +30,10 @@ import android.widget.Toast;
 
 import com.example.runtimepermissionapp.databinding.ActivityMainBinding;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,9 +49,6 @@ public class MainActivity extends AppCompatActivity {
     public static final int READ_CONTACTS = 664;
     public static final int RECORD_AUDIO = 734;
 
-
-    ListView list;
-    ArrayList mobileArray;
     HashMap<String, String> contacts;
 
     @Override
@@ -52,8 +56,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        mobileArray = new ArrayList();
         contacts = new HashMap<>();
 
         binding.phoneCall.setOnClickListener(new View.OnClickListener() {
@@ -107,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(MainActivity.this, Build.VERSION.SDK_INT + " requires no notification permission", Toast.LENGTH_SHORT).show();
                 }
-
             }
         });
     }
@@ -117,7 +118,8 @@ public class MainActivity extends AppCompatActivity {
         if (str.equals("camera")) {
             if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(MainActivity.this, "camera permission already granted", Toast.LENGTH_SHORT).show();
-            } else if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.CAMERA)) {
+            }   // agar app k paas phle permission thi and user ne deny kr diya he ab us permission se to ye khulega
+            else if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.CAMERA)) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setMessage("this permission is required for this and this")
                         .setTitle("camera required")
@@ -135,6 +137,11 @@ public class MainActivity extends AppCompatActivity {
             }
         } else if (str.equals("storage")) {
             if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                try {
+                    generatePdfFunc();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 Toast.makeText(this, "storage permission already granted", Toast.LENGTH_SHORT).show();
             } else if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -195,6 +202,11 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (Environment.isExternalStorageManager()) {
                     // Permission is granted
+                    try {
+                        generatePdfFunc();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     Toast.makeText(this, "manage storage permission already granted", Toast.LENGTH_SHORT).show();
                     Log.d("dgdgsdfgsdfgs", "yes yes yes yes ");
                 } else {
@@ -270,6 +282,28 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void generatePdfFunc() throws IOException {
+        PdfDocument pdfDocument = new PdfDocument();
+        Paint paint = new Paint();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(400, 400, 1).create();
+        PdfDocument.Page page = pdfDocument.startPage(pageInfo);
+        Canvas canvas = page.getCanvas();
+        canvas.drawText("hello yogesh gurjar", 40, 50, paint);
+        pdfDocument.finishPage(page);
+
+        String filePath = Environment.getExternalStorageDirectory().getPath() + "/HelloYogeshGurjar.pdf";
+        File file = new File(filePath);
+        try {
+            FileOutputStream outputStream = new FileOutputStream(file);
+            pdfDocument.writeTo(outputStream);
+            Toast.makeText(this, "PDF file saved to " + filePath, Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Failed to save PDF file", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
     private void getAllContacts() {
         Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
 
@@ -281,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
                 // Get the contact name and phone number
                 String name = cursor.getString(nameIndex);
                 String phone = cursor.getString(phoneIndex);
-
+                contacts.put(name, phone);
                 // Do something with the contact information
                 Log.d("CONTACT", name + ": " + phone);
             }
@@ -290,7 +324,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.d("CONTACT", "Cursor is null");
         }
-
 
 
     }
@@ -347,6 +380,11 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == STORAGE) {// storage
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "accepted", Toast.LENGTH_SHORT).show();
+                try {
+                    generatePdfFunc();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } else if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setMessage("this feature is unavailable , now open settings ")
