@@ -1,6 +1,7 @@
 package com.example.runtimepermissionapp;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -35,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int PHONE_CALL = 24;
     public static final int READ_CONTACTS = 664;
     public static final int RECORD_AUDIO = 734;
+    public static final int IMAGE_AUDIO_VIDEO = 76521;
 
     HashMap<String, String> contacts;
 
@@ -74,6 +77,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 requestRuntimePermissionFunc("recordAudio");
+            }
+        });
+
+        binding.imageAudioVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestRuntimePermissionFunc("imageAudioVideo");
+                } else {
+                    Toast.makeText(MainActivity.this, "u dont need to allow this permission", Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
 
@@ -277,6 +292,26 @@ public class MainActivity extends AppCompatActivity {
                         .show();
             } else {
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, RECORD_AUDIO);
+            }
+        } else if (str.equals("imageAudioVideo")) {
+            if (ContextCompat.checkSelfPermission(MainActivity.this, Arrays.toString(new String[]{Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.READ_MEDIA_IMAGES})) == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "image audio video permission already granted", Toast.LENGTH_SHORT).show();
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Arrays.toString(new String[]{Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.READ_MEDIA_IMAGES}))) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setMessage("this permission is required for this and this")
+                        .setTitle("image audio video required")
+                        .setCancelable(false)
+                        .setPositiveButton("accept", new DialogInterface.OnClickListener() {
+                            @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.READ_MEDIA_VIDEO}, IMAGE_AUDIO_VIDEO);
+                            }
+                        })
+                        .setNegativeButton("reject", (dialog, which) -> dialog.dismiss())
+                        .show();
+            } else {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.READ_MEDIA_VIDEO}, IMAGE_AUDIO_VIDEO);
             }
         }
 
@@ -497,6 +532,30 @@ public class MainActivity extends AppCompatActivity {
                         .show();
             } else {
                 requestRuntimePermissionFunc("readContacts");
+            }
+        } else if (requestCode == IMAGE_AUDIO_VIDEO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "accepted", Toast.LENGTH_SHORT).show();
+//                getAllContacts();
+            } else if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Arrays.toString(new String[]{Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.READ_MEDIA_VIDEO}))) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setMessage("this feature is unavailable , now open settings ")
+                        .setTitle("image audio video to chaiye")
+                        .setCancelable(false)
+                        .setPositiveButton("accept", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                Uri uri = Uri.fromParts("package", getPackageName(), null);
+                                intent.setData(uri);
+                                startActivity(intent);
+                                dialog.dismiss();
+                            }
+                        })
+                        .setNegativeButton("reject", (dialog, which) -> dialog.dismiss())
+                        .show();
+            } else {
+                requestRuntimePermissionFunc("imageAudioVideo");
             }
         }
     }
