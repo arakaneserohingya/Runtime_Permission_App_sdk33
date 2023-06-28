@@ -43,6 +43,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     public static final int STORAGE = 11;
+    public static final int IMAGE_AUDIO_VIDEO = 76521;
     public static final int CAMERA = 123;
     public static final int LOCATION = 1313;
     public static final int NOTIFICATION = 357;
@@ -50,8 +51,6 @@ public class MainActivity extends AppCompatActivity {
     public static final int PHONE_CALL = 24;
     public static final int READ_CONTACTS = 664;
     public static final int RECORD_AUDIO = 734;
-    public static final int IMAGE_AUDIO_VIDEO = 76521;
-
     HashMap<String, String> contacts;
 
     @Override
@@ -340,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getAllContacts() {
+
         Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
 
         if (cursor != null) {
